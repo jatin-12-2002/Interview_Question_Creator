@@ -31,17 +31,17 @@ def file_processing(file_path):
         question_gen += page.page_content
         
     splitter_ques_gen = TokenTextSplitter(
-        model_name = 'gpt-4',
+        model_name = 'gpt-3.5-turbo',
         chunk_size = 10000,
         chunk_overlap = 200
     )
-
+    
     chunks_ques_gen = splitter_ques_gen.split_text(question_gen)
 
     document_ques_gen = [Document(page_content=t) for t in chunks_ques_gen]
 
     splitter_ans_gen = TokenTextSplitter(
-        model_name = 'gpt-4',
+        model_name = 'gpt-3.5-turbo',
         chunk_size = 1000,
         chunk_overlap = 100
     )
@@ -61,9 +61,9 @@ def llm_pipeline(file_path):
 
     document_ques_gen, document_answer_gen = file_processing(file_path)
 
-    llm_ques_gen_pipeline = ChatOpenAI(
+    llm_ques_gen_pipeline = ChatGoogleGenerativeAI(
         temperature = 0.3,
-        model = "gpt-3.5-turbo"
+        model = "gemini-1.5-flash"
     )
 
    
@@ -85,11 +85,11 @@ def llm_pipeline(file_path):
 
     ques = ques_gen_chain.run(document_ques_gen)
 
-    embeddings = OpenAIEmbeddings()
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
     vector_store = FAISS.from_documents(document_answer_gen, embeddings)
 
-    llm_answer_gen = ChatOpenAI(temperature=0.1, model="gpt-3.5-turbo")
+    llm_answer_gen = ChatGoogleGenerativeAI(temperature=0.1, model="gemini-1.5-flash")
 
     ques_list = ques.split("\n")
     filtered_ques_list = [element for element in ques_list if element.endswith('?') or element.endswith('.')]

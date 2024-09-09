@@ -8,7 +8,7 @@ prompt_template = """
     {text}
     ------------
 
-    Create questions that will prepare the coders or programmers for their tests.
+    Create 10 questions that will prepare the coders or programmers for their tests.
     Make sure not to lose any important information.
 
     QUESTIONS:
