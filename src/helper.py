@@ -1,3 +1,6 @@
+import time
+import os
+from dotenv import load_dotenv
 from langchain.document_loaders import PyPDFLoader
 from langchain.docstore.document import Document
 from langchain.text_splitter import TokenTextSplitter
@@ -7,8 +10,6 @@ from langchain.chains.summarize import load_summarize_chain
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
-import os
-from dotenv import load_dotenv
 from src.prompt import prompt_template, refine_template  # Import the templates
 
 # Load environment variables
@@ -16,6 +17,20 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
+# Function to implement retry mechanism with exponential backoff
+def call_with_retry(func, retries=3, delay=2):
+    attempt = 0
+    while attempt < retries:
+        try:
+            return func()
+        except Exception as e:
+            attempt += 1
+            print(f"Error: {str(e)}. Retrying {attempt}/{retries}...")
+            if attempt < retries:
+                time.sleep(delay)  # Wait before retrying
+                delay *= 2  # Exponential backoff
+            else:
+                raise ValueError(f"Failed after {retries} attempts: {str(e)}")
 
 def file_processing(file_path):
     try:
@@ -48,7 +63,6 @@ def file_processing(file_path):
 
     return document_ques_gen, document_answer_gen
 
-
 def llm_pipeline(file_path, num_questions):
     document_ques_gen, document_answer_gen = file_processing(file_path)
 
@@ -61,7 +75,7 @@ def llm_pipeline(file_path, num_questions):
     # Create prompt templates for questions and refining
     PROMPT_QUESTIONS = PromptTemplate(
         template=prompt_template,
-        input_variables=["text", "num_questions"]  # Expecting 'text' and 'num_questions'
+        input_variables=["text", "num_questions"]
     )
 
     REFINE_PROMPT_QUESTIONS = PromptTemplate(
@@ -69,21 +83,24 @@ def llm_pipeline(file_path, num_questions):
         input_variables=["existing_answer", "text"]
     )
 
-    # Run the question generation chain
-    ques_gen_chain = load_summarize_chain(
-        llm=llm_ques_gen_pipeline,
-        chain_type="refine",
-        verbose=True,
-        question_prompt=PROMPT_QUESTIONS,
-        refine_prompt=REFINE_PROMPT_QUESTIONS
-    )
+    # Retry mechanism for the question generation chain
+    def question_generation_func():
+        ques_gen_chain = load_summarize_chain(
+            llm=llm_ques_gen_pipeline,
+            chain_type="refine",
+            verbose=True,
+            question_prompt=PROMPT_QUESTIONS,
+            refine_prompt=REFINE_PROMPT_QUESTIONS
+        )
 
-    # Make sure to pass 'num_questions' correctly
-    try:
-        ques = ques_gen_chain.run({
+        return ques_gen_chain.run({
             'input_documents': document_ques_gen,
             'num_questions': num_questions
         })
+
+    try:
+        # Using retry mechanism
+        ques = call_with_retry(question_generation_func, retries=3, delay=5)
     except Exception as e:
         raise ValueError(f"Question generation failed: {str(e)}")
 
