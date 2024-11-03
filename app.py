@@ -86,14 +86,6 @@ def get_docx(file_path, num_questions):
     doc.save(output_file)
     return output_file_name
 
-@celery.task(bind=True)
-def process_pdf_task(self, file_path, num_questions):
-    try:
-        output_file_name = get_docx(file_path, num_questions)
-        return {"status": "completed", "output_file": output_file_name}
-    except Exception as e:
-        return {"status": "failed", "error": str(e)}
-
 
 if __name__ == "__main__":
     import uvicorn
