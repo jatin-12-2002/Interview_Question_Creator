@@ -1,5 +1,5 @@
-import time
 import os
+import logging
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.docstore.document import Document
@@ -19,6 +19,10 @@ os.environ["MISTRAL_API_KEY"] = MISTRAL_API_KEY
 
 HF_TOKEN = os.getenv("HF_TOKEN")
 os.environ["HF_TOKEN"] = HF_TOKEN
+
+# Set up logging for better debugging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def file_processing(file_path):
     try:
@@ -48,6 +52,8 @@ def file_processing(file_path):
         chunk_overlap=100
     )
     document_answer_gen = splitter_ans_gen.split_documents(document_ques_gen)
+
+    logger.info(f"Generated {len(document_ques_gen)} chunks for questions and {len(document_answer_gen)} for answers.")
 
     return document_ques_gen, document_answer_gen
 
@@ -86,6 +92,7 @@ def llm_pipeline(file_path, num_questions):
             'num_questions': num_questions
         })
     except Exception as e:
+        logger.error(f"Question generation failed: {e}")
         raise ValueError(f"Question generation failed: {str(e)}")
 
     # Embeddings for answer generation
@@ -96,8 +103,8 @@ def llm_pipeline(file_path, num_questions):
     llm_answer_gen = ChatMistralAI(temperature=0.1, model="mistral-large-latest")
 
     # Process the questions into a list
-    ques_list = ques.split("\n")
-    filtered_ques_list = [q for q in ques_list if q.endswith('?') or q.endswith('.')]
+    ques_list = ques.strip().split("\n")
+    filtered_ques_list = [q for q in ques_list if q.strip().endswith('?') or q.strip().endswith('.')]
 
     # Retrieval-based answer generation
     answer_generation_chain = RetrievalQA.from_chain_type(
@@ -105,6 +112,8 @@ def llm_pipeline(file_path, num_questions):
         chain_type="stuff",
         retriever=vector_store.as_retriever()
     )
+    
+    logger.info(f"Generated {len(filtered_ques_list)} questions.")
 
     # Return structured data for easier frontend handling
     return {
