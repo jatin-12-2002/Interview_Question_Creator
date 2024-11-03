@@ -14,5 +14,8 @@ python-dotenv
 langchain_mistralai
 python-docx
 rich
+celery[redis]
+redis
+gunicorn
 
 -e .
