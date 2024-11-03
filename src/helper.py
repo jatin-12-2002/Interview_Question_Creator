@@ -1,36 +1,24 @@
 import time
 import os
 from dotenv import load_dotenv
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.docstore.document import Document
 from langchain.text_splitter import TokenTextSplitter
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_mistralai import ChatMistralAI
 from langchain.prompts import PromptTemplate
 from langchain.chains.summarize import load_summarize_chain
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_mistralai import MistralAIEmbeddings
+from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from src.prompt import prompt_template, refine_template  # Import the templates
 
 # Load environment variables
 load_dotenv()
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
+os.environ["MISTRAL_API_KEY"] = MISTRAL_API_KEY
 
-# Function to implement retry mechanism with exponential backoff
-def call_with_retry(func, retries=3, delay=2):
-    attempt = 0
-    while attempt < retries:
-        try:
-            return func()
-        except Exception as e:
-            attempt += 1
-            print(f"Error: {str(e)}. Retrying {attempt}/{retries}...")
-            if attempt < retries:
-                time.sleep(delay)  # Wait before retrying
-                delay *= 2  # Exponential backoff
-            else:
-                raise ValueError(f"Failed after {retries} attempts: {str(e)}")
+HF_TOKEN = os.getenv("HF_TOKEN")
+os.environ["HF_TOKEN"] = HF_TOKEN
 
 def file_processing(file_path):
     try:
@@ -67,9 +55,9 @@ def llm_pipeline(file_path, num_questions):
     document_ques_gen, document_answer_gen = file_processing(file_path)
 
     # Initialize LLM with temperature control
-    llm_ques_gen_pipeline = ChatGoogleGenerativeAI(
+    llm_ques_gen_pipeline = ChatMistralAI(
         temperature=0.3,
-        model="gemini-1.5-flash"
+        model="mistral-large-latest"
     )
 
     # Create prompt templates for questions and refining
@@ -83,33 +71,29 @@ def llm_pipeline(file_path, num_questions):
         input_variables=["existing_answer", "text"]
     )
 
-    # Retry mechanism for the question generation chain
-    def question_generation_func():
-        ques_gen_chain = load_summarize_chain(
-            llm=llm_ques_gen_pipeline,
-            chain_type="refine",
-            verbose=True,
-            question_prompt=PROMPT_QUESTIONS,
-            refine_prompt=REFINE_PROMPT_QUESTIONS
-        )
+    ques_gen_chain = load_summarize_chain(
+        llm=llm_ques_gen_pipeline,
+        chain_type="refine",
+        verbose=True,
+        question_prompt=PROMPT_QUESTIONS,
+        refine_prompt=REFINE_PROMPT_QUESTIONS
+    )
 
-        return ques_gen_chain.run({
+    # Run question generation chain
+    try:
+        ques = ques_gen_chain.run({
             'input_documents': document_ques_gen,
             'num_questions': num_questions
         })
-
-    try:
-        # Using retry mechanism
-        ques = call_with_retry(question_generation_func, retries=3, delay=5)
     except Exception as e:
         raise ValueError(f"Question generation failed: {str(e)}")
 
     # Embeddings for answer generation
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+    embeddings = MistralAIEmbeddings(model="mistral-embed")
     vector_store = FAISS.from_documents(document_answer_gen, embeddings)
 
     # LLM for answer generation
-    llm_answer_gen = ChatGoogleGenerativeAI(temperature=0.1, model="gemini-1.5-flash")
+    llm_answer_gen = ChatMistralAI(temperature=0.1, model="mistral-large-latest")
 
     # Process the questions into a list
     ques_list = ques.split("\n")
@@ -122,4 +106,8 @@ def llm_pipeline(file_path, num_questions):
         retriever=vector_store.as_retriever()
     )
 
-    return answer_generation_chain, filtered_ques_list
+    # Return structured data for easier frontend handling
+    return {
+        "answer_generation_chain": answer_generation_chain,
+        "questions": filtered_ques_list
+    }
