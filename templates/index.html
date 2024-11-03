@@ -1,39 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interview Question Creator</title>
-  <link rel="stylesheet" href="/static/css/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Question Generator</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Upload PDF to Generate Interview Questions</h1>
+    <div class="container">
+        <h1>Interview Question Generator</h1>
 
-    <!-- File Upload Form -->
-    <form id="uploadForm" enctype="multipart/form-data">
-      <label for="pdfFile">Select PDF File:</label>
-      <input type="file" id="pdfFile" name="pdfFile" accept=".pdf" required>
+        <form id="uploadForm">
+            <label for="pdfFile">Upload PDF File:</label>
+            <input type="file" id="pdfFile" name="pdf_file" accept=".pdf" required>
+            
+            <label for="numQuestions">Number of Questions:</label>
+            <input type="number" id="numQuestions" name="num_questions" min="1" required>
 
-      <label for="numQuestions">Number of Questions:</label>
-      <input type="number" id="numQuestions" name="numQuestions" min="1" required>
+            <button type="submit">Generate Questions</button>
+        </form>
 
-      <button type="submit">Generate Questions</button>
-    </form>
-
-    <!-- Uploaded File Preview -->
-    <div id="filePreview" class="file-preview">
-      <h3>Uploaded File:</h3>
-      <p id="fileName">No file selected</p>
+        <div id="uploadStatus"></div>
+        
+        <div id="result">
+            <h2>Uploaded File:</h2>
+            <p id="uploadedFile"></p>
+            
+            <h2>Download Generated File:</h2>
+            <a id="downloadLink" href="#" download style="display:none;">Download QA.docx</a>
+        </div>
     </div>
 
-    <!-- Download Link for Output File -->
-    <div id="outputLink" class="output-link">
-      <h3>Generated Output:</h3>
-      <a id="downloadLink" href="#" style="display: none;" download>Download DOCX File</a>
-    </div>
-  </div>
-
-  <script src="/static/js/script.js"></script>
+    <script src="/static/js/script.js"></script>
 </body>
 </html>

@@ -1,55 +1,47 @@
-// script.js
+document.getElementById("uploadForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
 
-// Elements
-const uploadForm = document.getElementById('uploadForm');
-const pdfFileInput = document.getElementById('pdfFile');
-const numQuestionsInput = document.getElementById('numQuestions');
-const filePreview = document.getElementById('filePreview');
-const fileName = document.getElementById('fileName');
-const outputLink = document.getElementById('outputLink');
-const downloadLink = document.getElementById('downloadLink');
+    // Clear previous status and result
+    document.getElementById("uploadStatus").textContent = "Uploading...";
+    document.getElementById("uploadedFile").textContent = "Uploaded File";
+    document.getElementById("downloadLink").style.display = "none";
 
-// Display selected file name
-pdfFileInput.addEventListener('change', () => {
-  const file = pdfFileInput.files[0];
-  if (file) {
-    fileName.textContent = file.name;
-    filePreview.style.display = 'block';
-  } else {
-    filePreview.style.display = 'none';
-  }
-});
+    const formData = new FormData();
+    const pdfFile = document.getElementById("pdfFile").files[0];
+    const numQuestions = document.getElementById("numQuestions").value;
 
-// Form submission handler
-uploadForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-
-  const formData = new FormData();
-  formData.append('pdf_file', pdfFileInput.files[0]);
-  formData.append('num_questions', numQuestionsInput.value);
-
-  try {
-    // Post form data to backend with full URL for Codespaces compatibility
-    const response = await fetch(`${window.location.origin}/analyze`, {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Error Response:', errorText);
-      throw new Error('Failed to generate questions');
+    // Ensure pdfFile and numQuestions are present
+    if (!pdfFile || !numQuestions) {
+        document.getElementById("uploadStatus").textContent = "Please upload a file and enter the number of questions.";
+        return;
     }
 
-    // Parse JSON response
-    const result = await response.json();
+    // Append form data
+    formData.append("pdf_file", pdfFile);
+    formData.append("num_questions", numQuestions);
 
-    // Show download link
-    downloadLink.href = `${window.location.origin}/download/${result.output_file.split('/').pop()}`;
-    downloadLink.style.display = 'inline';
-    outputLink.style.display = 'block';
-  } catch (error) {
-    console.error(error);
-    alert('An error occurred while generating questions. Please try again.');
-  }
+    try {
+        // Send form data to FastAPI backend
+        const response = await fetch("/analyze", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        
+        // Update status and show uploaded file name
+        document.getElementById("uploadStatus").textContent = "File uploaded successfully!";
+        document.getElementById("uploadedFile").textContent = pdfFile.name;
+
+        // Show download link for generated file
+        const downloadLink = document.getElementById("downloadLink");
+        downloadLink.href = `/static/output/${result.output_file}`;
+        downloadLink.style.display = "block";
+    } catch (error) {
+        document.getElementById("uploadStatus").textContent = `Error: ${error.message}`;
+    }
 });

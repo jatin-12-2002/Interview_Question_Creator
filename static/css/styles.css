@@ -1,67 +1,62 @@
-/* styles.css */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f4f4f9;
-  }
-  
-  .container {
-    max-width: 600px;
-    padding: 2rem;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
-  }
-  
-  h1 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-    color: #333;
-  }
-  
-  form label {
-    font-weight: bold;
-    display: block;
-    margin-top: 1rem;
-  }
-  
-  form input[type="file"],
-  form input[type="number"] {
-    margin-top: 0.5rem;
-  }
-  
-  button {
-    margin-top: 1rem;
-    padding: 0.5rem 1rem;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  button:hover {
-    background-color: #45a049;
-  }
-  
-  .file-preview,
-  .output-link {
-    margin-top: 1.5rem;
-    display: none;
-  }
-  
-  .file-preview p,
-  .output-link a {
-    font-weight: bold;
-  }  
+.container {
+  width: 100%;
+  max-width: 600px;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+label {
+  font-weight: bold;
+  margin-top: 10px;
+  display: block;
+}
+
+input[type="file"],
+input[type="number"] {
+  margin: 10px 0;
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+#uploadStatus {
+  margin-top: 15px;
+  color: #007bff;
+}
+
+#result {
+  margin-top: 20px;
+}
