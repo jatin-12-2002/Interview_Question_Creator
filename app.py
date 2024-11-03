@@ -6,8 +6,19 @@ from fastapi.encoders import jsonable_encoder
 import os
 import aiofiles
 from src.helper import llm_pipeline
+from fastapi.middleware.cors import CORSMiddleware
+from src.celery_app import celery
 
 app = FastAPI()
+
+# Allow all origins for testing; specify allowed origins in production
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Serve static files (for styles, docs, etc.)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -43,12 +54,15 @@ async def analyze_pdf(pdf_file: UploadFile = File(...), num_questions: int = For
 
 
 def get_docx(file_path, num_questions):
-    answer_generation_chain, ques_list = llm_pipeline(file_path, num_questions)
+    pipeline_output = llm_pipeline(file_path, num_questions)
+    ques_list = pipeline_output["questions"]
+    answer_generation_chain = pipeline_output["answer_generation_chain"]
     
     base_folder = 'static/output/'
     os.makedirs(base_folder, exist_ok=True)
     
-    output_file = os.path.join(base_folder, "QA.docx")
+    output_file_name = "QA.docx"
+    output_file = os.path.join(base_folder, output_file_name)
 
     # Create a DOCX document
     from docx import Document
@@ -59,13 +73,26 @@ def get_docx(file_path, num_questions):
         doc.add_heading(f"Question {i}:", level=1)
         doc.add_paragraph(question)
 
-        answer = answer_generation_chain.run(question)
+        # Retrieve answer
+        try:
+            answer = answer_generation_chain.run(question)
+        except Exception as e:
+            answer = f"Answer generation failed: {str(e)}"
+        
         doc.add_heading("Answer:", level=2)
         doc.add_paragraph(answer)
         doc.add_paragraph("--------------------------------------------------\n\n")
 
     doc.save(output_file)
-    return output_file
+    return output_file_name
+
+@celery.task(bind=True)
+def process_pdf_task(self, file_path, num_questions):
+    try:
+        output_file_name = get_docx(file_path, num_questions)
+        return {"status": "completed", "output_file": output_file_name}
+    except Exception as e:
+        return {"status": "failed", "error": str(e)}
 
 
 if __name__ == "__main__":
