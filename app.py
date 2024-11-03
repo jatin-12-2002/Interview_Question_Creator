@@ -7,7 +7,19 @@ import os
 import aiofiles
 from src.helper import llm_pipeline
 from fastapi.middleware.cors import CORSMiddleware
-from src.celery_app import celery
+from celery import Celery
+
+# Configure Celery
+celery = Celery(
+    "tasks",
+    broker="redis://localhost:6379/0",
+    backend="redis://localhost:6379/1"
+)
+celery.conf.update(
+    task_serializer="json",
+    result_serializer="json",
+    accept_content=["json"],
+)
 
 app = FastAPI()
 
@@ -44,13 +56,18 @@ async def analyze_pdf(pdf_file: UploadFile = File(...), num_questions: int = For
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save PDF: {str(e)}")
 
-    # Generate questions and answers
+    # Enqueue the task with Celery
+    task = process_pdf_task.delay(pdf_filename, num_questions)
+    return JSONResponse(content=jsonable_encoder({"task_id": task.id}))
+
+
+@celery.task(bind=True)
+def process_pdf_task(self, file_path, num_questions):
     try:
-        output_file = get_docx(pdf_filename, num_questions)
-        response_data = {"output_file": output_file}
-        return JSONResponse(content=jsonable_encoder(response_data))
+        output_file_name = get_docx(file_path, num_questions)
+        return {"status": "completed", "output_file": output_file_name}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error during PDF analysis: {str(e)}")
+        return {"status": "failed", "error": str(e)}
 
 
 def get_docx(file_path, num_questions):
@@ -85,6 +102,22 @@ def get_docx(file_path, num_questions):
 
     doc.save(output_file)
     return output_file_name
+
+@app.get("/task_status/{task_id}")
+async def task_status(task_id: str):
+    task = celery.AsyncResult(task_id)
+    if task.state == "PENDING":
+        return {"status": "pending"}
+    elif task.state == "FAILURE":
+        return {"status": "failed", "error": str(task.info)}
+    elif task.state == "SUCCESS":
+        result = task.result
+        return {
+            "status": result["status"],
+            "output_file": result.get("output_file"),
+        }
+    else:
+        return {"status": "unknown"}
 
 
 if __name__ == "__main__":
