@@ -10,14 +10,14 @@
     <div class="container">
         <h1>Interview Question Generator</h1>
 
-        <form id="uploadForm">
+        <form id="uploadForm" class="form-style">
             <label for="pdfFile">Upload PDF File:</label>
             <input type="file" id="pdfFile" name="pdf_file" accept=".pdf" required>
             
             <label for="numQuestions">Number of Questions:</label>
             <input type="number" id="numQuestions" name="num_questions" min="1" required>
 
-            <button type="submit">Generate Questions</button>
+            <button type="submit" class="btn-primary">Generate Questions</button>
         </form>
 
         <div id="uploadStatus"></div>
@@ -27,7 +27,7 @@
             <p id="uploadedFile"></p>
             
             <h2>Download Generated File:</h2>
-            <a id="downloadLink" href="#" download style="display:none;">Download QA.docx</a>
+            <a id="downloadLink" href="#" download class="btn-download" style="display:none;">Download QA.docx</a>
         </div>
     </div>
 
