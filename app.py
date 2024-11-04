@@ -124,33 +124,34 @@ def get_docx(file_path, num_questions):
 def format_answer_text(paragraph, answer_text):
     lines = answer_text.splitlines()
     for line in lines:
-        # Handle headers (###) as bold and larger font
+        # Handle headers formatted as "### Header"
         if line.startswith("### "):
             heading = paragraph.add_run(line[4:])
             heading.bold = True
-            heading.font.size = Pt(14)
-            paragraph.add_run("\n")  # Add a line break for spacing
-
-        # Handle bullet points (-)
+            heading.font.size = Pt(12)
+            paragraph.add_run("\n")  # Line break after heading
+        
+        # Handle bullet points "- Bullet point"
         elif line.startswith("- "):
             bullet = paragraph.add_run("• " + line[2:])
-            bullet.font.size = Pt(12)
+            bullet.font.size = Pt(10)
             paragraph.add_run("\n")
-
+        
         else:
-            # Handle bold text (**text**)
-            parts = re.split(r"(\*\*.*?\*\*)", line)  # Split by bold markers
-            
+            # Split by bold markers (**text**) and add each part as a separate run
+            parts = re.split(r"(\*\*.*?\*\*)", line)
             for part in parts:
                 if part.startswith("**") and part.endswith("**"):
-                    # Remove ** and make text bold
+                    # Strip '**' and make bold
                     bold_text = paragraph.add_run(part[2:-2])
                     bold_text.bold = True
+                    bold_text.font.size = Pt(10)
                 else:
-                    # Normal text
+                    # Regular text
                     normal_text = paragraph.add_run(part)
-                normal_text.font.size = Pt(12)
-            paragraph.add_run("\n")  # Add a line break after each line
+                    normal_text.font.size = Pt(10)
+            
+            paragraph.add_run("\n")  # Line break after processing each line
 
 
 @app.get("/task_status/{task_id}")
