@@ -111,8 +111,8 @@ def get_docx(file_path, num_questions):
         answer_heading.style = 'Heading 2'
 
         # Format Answer text into Markdown-like style
-        answer_paragraph = doc.add_paragraph()
-        format_answer_text(answer_paragraph, answer)
+        # answer_paragraph = doc.add_paragraph()
+        format_answer_text(doc, answer)
 
         # Divider line
         doc.add_paragraph("--------------------------------------------------\n\n")
@@ -122,36 +122,49 @@ def get_docx(file_path, num_questions):
 
 
 def format_answer_text(paragraph, answer_text):
-    lines = answer_text.splitlines()
-    for line in lines:
-        # Handle headers formatted as "### Header"
-        if line.startswith("### "):
-            heading = paragraph.add_run(line[4:])
-            heading.bold = True
-            heading.font.size = Pt(12)
-            paragraph.add_run("\n")  # Line break after heading
+    paragraphs = answer_text.split("\n\n")
+    
+    for para in paragraphs:
+        lines = para.splitlines()
         
-        # Handle bullet points "- Bullet point"
-        elif line.startswith("- "):
-            bullet = paragraph.add_run("• " + line[2:])
-            bullet.font.size = Pt(10)
-            paragraph.add_run("\n")
-        
-        else:
-            # Split by bold markers (**text**) and add each part as a separate run
-            parts = re.split(r"(\*\*.*?\*\*)", line)
-            for part in parts:
-                if part.startswith("**") and part.endswith("**"):
-                    # Strip '**' and make bold
-                    bold_text = paragraph.add_run(part[2:-2])
-                    bold_text.bold = True
-                    bold_text.font.size = Pt(10)
-                else:
-                    # Regular text
-                    normal_text = paragraph.add_run(part)
-                    normal_text.font.size = Pt(10)
+        for line in lines:
+            # Create a new paragraph for each line
+            current_paragraph = paragraph.add_paragraph()
             
-            paragraph.add_run("\n")  # Line break after processing each line
+            # Handle headers starting with ###
+            if line.startswith("### "):
+                header_run = current_paragraph.add_run(line[4:])
+                header_run.bold = True
+                header_run.font.size = Pt(14)
+                current_paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+            
+            # Primary bullet points
+            elif line.startswith("1. ") or line.startswith("- "):
+                current_paragraph.paragraph_format.left_indent = Pt(20)
+                process_text_with_bold(current_paragraph, line)
+
+            # Secondary bullet points with extra indentation
+            elif line.startswith("  - "):
+                current_paragraph.paragraph_format.left_indent = Pt(40)
+                process_text_with_bold(current_paragraph, line)
+            
+            # Regular text
+            else:
+                process_text_with_bold(current_paragraph, line)
+
+
+def process_text_with_bold(paragraph, text):
+    parts = re.split(r"(\*\*[^*]+\*\*)", text)
+    
+    for part in parts:
+        if part.startswith("**") and part.endswith("**"):
+            bold_run = paragraph.add_run(part[2:-2])  # Remove the ** markers
+            bold_run.bold = True
+            bold_run.font.size = Pt(11)
+        else:
+            normal_run = paragraph.add_run(part)
+            normal_run.font.size = Pt(11)
+
 
 
 @app.get("/task_status/{task_id}")
