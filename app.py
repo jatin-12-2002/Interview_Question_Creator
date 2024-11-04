@@ -3,7 +3,11 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.encoders import jsonable_encoder
-import os
+from docx import Document
+from docx.shared import Pt
+from docx.oxml.ns import qn
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+import os,re
 import aiofiles
 from src.helper import llm_pipeline
 from fastapi.middleware.cors import CORSMiddleware
@@ -74,34 +78,80 @@ def get_docx(file_path, num_questions):
     pipeline_output = llm_pipeline(file_path, num_questions)
     ques_list = pipeline_output["questions"]
     answer_generation_chain = pipeline_output["answer_generation_chain"]
-    
+
     base_folder = 'static/output/'
     os.makedirs(base_folder, exist_ok=True)
-    
+
     output_file_name = "QA.docx"
     output_file = os.path.join(base_folder, output_file_name)
 
     # Create a DOCX document
-    from docx import Document
     doc = Document()
     doc.add_heading('Interview Questions and Answers', 0)
 
     for i, question in enumerate(ques_list[:num_questions], start=1):
-        doc.add_heading(f"Question {i}:", level=1)
-        doc.add_paragraph(question)
+        # Add Question heading
+        question_heading = doc.add_paragraph()
+        question_heading.add_run(f"Question {i}:").bold = True
+        question_heading.style = 'Heading 2'  # Style to make it look like a header
+
+        # Add Question text
+        question_paragraph = doc.add_paragraph(question)
+        question_paragraph.style = doc.styles['Normal']
 
         # Retrieve answer
         try:
             answer = answer_generation_chain.run(question)
         except Exception as e:
             answer = f"Answer generation failed: {str(e)}"
-        
-        doc.add_heading("Answer:", level=2)
-        doc.add_paragraph(answer)
+
+        # Add Answer heading
+        answer_heading = doc.add_paragraph()
+        answer_heading.add_run("Answer:").bold = True
+        answer_heading.style = 'Heading 2'
+
+        # Format Answer text into Markdown-like style
+        answer_paragraph = doc.add_paragraph()
+        format_answer_text(answer_paragraph, answer)
+
+        # Divider line
         doc.add_paragraph("--------------------------------------------------\n\n")
 
     doc.save(output_file)
     return output_file_name
+
+
+def format_answer_text(paragraph, answer_text):
+    lines = answer_text.splitlines()
+    for line in lines:
+        # Handle headers (###) as bold and larger font
+        if line.startswith("### "):
+            heading = paragraph.add_run(line[4:])
+            heading.bold = True
+            heading.font.size = Pt(14)
+            paragraph.add_run("\n")  # Add a line break for spacing
+
+        # Handle bullet points (-)
+        elif line.startswith("- "):
+            bullet = paragraph.add_run("• " + line[2:])
+            bullet.font.size = Pt(12)
+            paragraph.add_run("\n")
+
+        else:
+            # Handle bold text (**text**)
+            parts = re.split(r"(\*\*.*?\*\*)", line)  # Split by bold markers
+            
+            for part in parts:
+                if part.startswith("**") and part.endswith("**"):
+                    # Remove ** and make text bold
+                    bold_text = paragraph.add_run(part[2:-2])
+                    bold_text.bold = True
+                else:
+                    # Normal text
+                    normal_text = paragraph.add_run(part)
+                normal_text.font.size = Pt(12)
+            paragraph.add_run("\n")  # Add a line break after each line
+
 
 @app.get("/task_status/{task_id}")
 async def task_status(task_id: str):
