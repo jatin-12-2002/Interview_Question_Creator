@@ -1,3 +1,37 @@
+# Interview Question Creator using Mistral and LangChain
+
+# Introduction
+
+**Interview Question Creator** is a powerful tool designed to streamline and enhance interview preparation by generating **domain-specific interview questions and answers**. This application leverages AI-powered models and custom processing techniques to create comprehensive question sets across technical, theoretical, and behavioral domains. Users can upload a PDF of relevant materials, from which tailored interview questions are **generated, refined, and formatted for download**.
+
+## Model and Prompt Engineering
+This tool utilizes the **Mistral large language model** via **LangChain**, a library that simplifies working with advanced language models. The LangChain integration enables efficient pipelines for both question generation and refinement. The generated questions undergo a **refinement process using prompt engineering** to ensure they cover diverse aspects of interview readiness, from **technical knowledge to problem-solving and interpersonal skills**. The **refining prompt** technique is especially valuable here: it helps identify and enhance questions for clarity and depth by iterating on the initial question set with additional context from the input material. This approach ensures the questions are well-rounded and relevant, addressing various dimensions of interview topics effectively.
+
+## Formatting Output
+Once questions and answers are generated, they are **formatted in a DOCX file with custom styling for readability and clarity**. This includes applying **Markdown-inspired styling**, such as bullet points, headers, and bold text, to create a professional and accessible document.
+
+## Frontend and Interaction
+On the frontend, a simple and intuitive **HTML**, **CSS**, and **JavaScript** interface allows users to upload PDFs, specify the number of questions, and download the final document. **JavaScript** manages user interactions, including file upload, server communication, status polling, and download link display, providing a smooth experience throughout.
+
+## Handling Long Response Times with Redis and Celery and Deployment on AWS EC2
+Since the **server has a 1-minute response timeout** and question generation can exceed this time limit, the app is designed to **handle tasks asynchronously using Celery and Redis**. **Redis** serves as both the task broker and results backend, while **Celery** enables background task management, allowing requests to be processed reliably and progress updates to be provided in real-time. Finally, the application is **deployed on an AWS EC2 instance**, providing flexibility, control, and scalability for end users who need on-demand access to the service.
+
+
+## Tech Stack Used
+- **Language**: Python
+- **FrameWork**: LangChain
+- **Backend**: FastAPI
+- **Model**: Mistral Large Language Model (via LangChain)
+- **Database**: FAISS (vector storage for embeddings)
+- **Message Queue**: Redis
+- **Task Management**: Celery
+- **Frontend**: HTML, CSS, JavaScript
+
+## Infrastructure
+- **Deployment**: AWS EC2
+- **Version Control**: GitHub
+
+
 ## Installation
 
 The Code is written in Python 3.10.15. If you don't have Python installed you can find it here. If you are using a lower version of Python you can upgrade using the pip package, ensuring you have the latest version of pip.
@@ -162,7 +196,7 @@ pip3 install -r  requirements.txt --break-system-packages
 
 ### The --break-system-packages flag in pip allows to override the externally-managed-environment error and install Python packages system-wide. pip install package_name --break-system-packages
 
-### Step 6.11: Test the Application with U. Verify the app is working by visiting **http://your-ec2-public-ip:8080**
+### Step 6.11: Test the Application with Uvicorn. Verify the app is working by visiting **http://your-ec2-public-ip:8080**
 ```bash
 uvicorn app:app --host 0.0.0.0 --port 8080
 ```
@@ -223,7 +257,7 @@ sudo systemctl start uvicorn
 sudo systemctl enable uvicorn
 ```
 
-### Step 6.18: Install Redis
+### Step 6.18: Connect to a new terminal of same EC2 Instance. Install Redis.
 ```bash
 sudo apt-get update
 ```
@@ -241,7 +275,7 @@ sudo service redis-server start
 redis-cli ping
 ```
 
-### Step 6.21: Start the Celery Worker. In a new terminal window, activate the environment then run:
+### Step 6.21: Start the Celery Worker.
 ```bash
 celery -A app.celery worker --loglevel=info
 ```
@@ -273,3 +307,12 @@ http://your-ec2-public-ip:8080
 
 ## Conclusion 
 
+1. The **Interview Question Creator** uses a **RAG (Retrieval-Augmented Generation)** approach, combining retrieval-based techniques with **generative AI** to produce highly relevant, domain-specific questions and answers. By utilizing **FAISS** as the **vector database**, the app retrieves contextually similar information from user-uploaded documents, ensuring that generated questions are precise and tailored to specific topics, covering technical, behavioral, and theoretical aspects effectively.
+
+2. The **Mistral model and its embeddings** play a crucial role in semantic understanding, creating embeddings that accurately capture the nuances of the uploaded content. This allows the app to build contextual embeddings, aligning the generated questions closely with the specific themes and topics of each document.
+
+3. Integrating **LangChain** for **prompt engineering** and **question refinement** provides users with high-quality, diversified question sets. The iterative **refinement process** ensures each question is clear, focused, and balanced across multiple interview dimensions.
+
+4. **Asynchronous task management with Celery and Redis** enables efficient handling of **longer processing times**, allowing the application to manage complex question generation tasks within real-world server constraints, providing status updates to users throughout the process.
+
+5. **AWS EC2 deployment** ensures **scalability and stability**, giving users consistent, on-demand access to the service. Combined with an intuitive frontend interface, this solution offers a seamless, interactive experience for custom interview preparation.
