@@ -16,6 +16,6 @@ python-docx
 rich
 celery[redis]
 redis
-gunicorn
+uvicorn
 
 -e .
