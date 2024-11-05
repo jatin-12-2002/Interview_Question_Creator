@@ -71,7 +71,7 @@ pip install -r requirements.txt
 MISTRAL_API_KEY=""
 HF_TOKEN=""
 ```
-- My .env file is [here](https://drive.google.com/file/d/1D_7N8INSDax3oFKJIzbBNp2m8knhiTDV/view?usp=drive_link)
+- My .env file is [here](https://drive.google.com/file/d/1JhzfK0ncRatvec8i5RUD6O5WgKissp3M/view?usp=drive_link)
 
 
 ### Step 6: Install Redis
@@ -297,7 +297,7 @@ uvicorn app:app --host 0.0.0.0 --port 8080
 http://your-ec2-public-ip:8080
 ```
 
-### If you encounter any error like code:400 while running "https:{Public_address}:5000" then just run it with 'http' instead of 'https'.
+### If you encounter any error like code:400 while running "https://{your-ec2-public-ip:8080}" then just run it with 'http' instead of 'https'.
 
 
 ### Check that your app is accessible through http://your-ec2-public-ip. Nginx will handle incoming requests and proxy them to Uvicorn.
