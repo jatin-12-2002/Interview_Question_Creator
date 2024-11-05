@@ -164,28 +164,28 @@ cd Interview_Question_Creator
 touch .env
 ```
 
-### Step 6.6: Open file in VI editor.
+### Step 6.7: Open file in VI editor.
 ```bash
 vi .env
 ```
 
-### Step 6.7: Press insert and Mention .env variable then press esc for saving and write :wq for exit.
+### Step 6.8: Press insert and Mention .env variable then press esc for saving and write :wq for exit.
 ```bash
 MISTRAL_API_KEY=""
 HF_TOKEN=""
 ```
 
-### Step 6.8: ### For checking the values of .env variables.
+### Step 6.9: ### For checking the values of .env variables.
 ```bash
 cat .env
 ```
 
-### Step 6.9: For installing python and pip here is a command
+### Step 6.10: For installing python and pip here is a command
 ```bash
 sudo apt install python3-pip
 ```
 
-### Step 6.10: install the requirements.txt. The --break-system-packages flag in pip allows to override the externally-managed-environment error and install Python packages system-wide.
+### Step 6.11: install the requirements.txt. The --break-system-packages flag in pip allows to override the externally-managed-environment error and install Python packages system-wide.
 ```bash
 pip3 install -r  requirements.txt
 ```
@@ -196,17 +196,17 @@ pip3 install -r  requirements.txt --break-system-packages
 
 ### The --break-system-packages flag in pip allows to override the externally-managed-environment error and install Python packages system-wide. pip install package_name --break-system-packages
 
-### Step 6.11: Test the Application with Uvicorn. Verify the app is working by visiting **http://your-ec2-public-ip:8080**
+### Step 6.12: Test the Application with Uvicorn. Verify the app is working by visiting **http://your-ec2-public-ip:8080**
 ```bash
 uvicorn app:app --host 0.0.0.0 --port 8080
 ```
 
-### Step 6.12: Configure Nginx as a Reverse Proxy. Set up Nginx to forward requests to Uvicorn. Open the Nginx configuration file:
+### Step 6.13: Configure Nginx as a Reverse Proxy. Set up Nginx to forward requests to Uvicorn. Open the Nginx configuration file:
 ```bash
 sudo nano /etc/nginx/sites-available/default
 ```
 
-### Step 6.13: Update the Nginx configuration as follows:
+### Step 6.14: Update the Nginx configuration as follows:
 ```bash
 server {
     listen 80;
@@ -223,17 +223,17 @@ server {
 ```
 ### Save and close the file
 
-### Step 6.14: Then restart Nginx:
+### Step 6.15: Then restart Nginx:
 ```bash
 sudo systemctl restart nginx
 ```
 
-### Step 6.15: Set Up Uvicorn as a Background Service. To keep Uvicorn as a systemd service, set up a systemd service file. Create a systemd  file:
+### Step 6.16: Set Up Uvicorn as a Background Service. To keep Uvicorn as a systemd service, set up a systemd service file. Create a systemd  file:
 ```bash
 sudo nano /etc/systemd/system/gunicorn.service
 ```
 
-### Step 6.16: Update the configuration as follows:
+### Step 6.17: Update the configuration as follows:
 ```bash
 [Unit]
 Description=Uvicorn instance to serve FastAPI app
@@ -249,7 +249,7 @@ WantedBy=multi-user.target
 ```
 ### Save and close the file
 
-### Step 6.17: Start and enable the service:
+### Step 6.18: Start and enable the service:
 ```bash
 sudo systemctl start uvicorn
 ```
@@ -257,7 +257,7 @@ sudo systemctl start uvicorn
 sudo systemctl enable uvicorn
 ```
 
-### Step 6.18: Connect to a new terminal of same EC2 Instance. Install Redis.
+### Step 6.19: Connect to a new terminal of same EC2 Instance. Install Redis.
 ```bash
 sudo apt-get update
 ```
@@ -265,17 +265,17 @@ sudo apt-get update
 sudo apt-get install redis-server
 ```
 
-### Step 6.19: Start the Redis Server(usually done on port 6379 by default).
+### Step 6.20: Start the Redis Server(usually done on port 6379 by default).
 ```bash
 sudo service redis-server start
 ```
 
-### Step 6.20: Check if Redis is running. It should return **PONG** if everything is working fine.
+### Step 6.21: Check if Redis is running. It should return **PONG** if everything is working fine.
 ```bash
 redis-cli ping
 ```
 
-### Step 6.21: Start the Celery Worker.
+### Step 6.22: Start the Celery Worker.
 ```bash
 celery -A app.celery worker --loglevel=info
 ```
